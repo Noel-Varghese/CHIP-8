@@ -1,0 +1,17 @@
+# Build outputs
+*.exe
+*.out
+*.elf
+*.o
+*.obj
+
+# SDL runtime files
+*.dll
+SDL3/
+
+# VS Code
+.vscode/
+
+# OS junk
+.DS_Store
+Thumbs.db
