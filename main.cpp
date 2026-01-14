@@ -1,6 +1,7 @@
 #include <iostream>
 #include "logger.h"
 #include "cmdLineParser.h"
+#include "chip8.h"
 using namespace std;
 
 int main(int argc, char** argv){//helps in taking in the roms later on :)
@@ -23,5 +24,11 @@ int main(int argc, char** argv){//helps in taking in the roms later on :)
         exit(1);
     }
     logger->log("Rom path provided: "+cmdParser.getRomFileName(), ELogLevel::INFO);
+
+    TChip8 emu;
+    emu.init(cmdParser.getRomFileName());//gets the rom file and then sends it to the chip8
+    emu.run();
+    emu.deinit();
+
     return 0;
 }
