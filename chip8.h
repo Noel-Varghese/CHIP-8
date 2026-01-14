@@ -4,6 +4,7 @@
 #include <cstdint>//includes all the uint8_t, uint16_t
 #include <iostream>
 #include "logger.h"
+#include "romLoader.h"
 //defines basic utilities like font etc.
 #define NUM_KEYS 16
 #define TOTAL_RAM 4096
@@ -58,6 +59,8 @@ class TChip8{
     bool m_emulator_running;
 
     shared_ptr<TLogger> m_logger;
+    //rom loader
+    TRomLoader* m_loader;
     public:
         TChip8();
         /*We use a constructor to put the CHIP-8 machine into a valid starting state,

@@ -1,5 +1,6 @@
 #include "chip8.h"
 #include "logger.h"
+
 using namespace std;
 
 TChip8::TChip8(){
@@ -31,7 +32,10 @@ void TChip8::init(string rom_path){
     for(auto i=0;i<NUM_KEYS;i++){
         m_KEYS[i] = 0;
     }
-    m_key_pressed = 0;
+    m_key_pressed = false;
+    m_loader = new TRomLoader();
+    m_loader->LoadRom(rom_path, RAM+CHIP8_STRT_ADDR);//loads the ROM
+    delete m_loader;
 }
 
 void TChip8::run(){
