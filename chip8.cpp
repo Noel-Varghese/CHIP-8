@@ -1,5 +1,6 @@
 #include "chip8.h"
 #include "logger.h"
+#include "cpu.h"
 
 using namespace std;
 
@@ -39,9 +40,14 @@ void TChip8::init(string rom_path){
 }
 
 void TChip8::run(){
-
+    while(m_emulator_running){
+        m_cpu->fetch();
+        m_cpu->decode();
+        m_cpu->exec();
+    }
 }
 
 void TChip8::deinit(){
     //to de initialize whatever we intialized :) for shutdown 
+    m_cpu->deinit();
 }

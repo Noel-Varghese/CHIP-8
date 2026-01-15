@@ -46,6 +46,7 @@ const static uint8_t FONTSET[] = {
 class TCpu;//does all the opcode
 class TChip8{
     friend class TCpu;
+    TCpu* m_cpu;
 
     uint8_t m_screen[SCREEN_H][SCREEN_W];
     uint8_t m_KEYS[NUM_KEYS];
