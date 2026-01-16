@@ -51,7 +51,8 @@ void TCpu::exec(){
         case 0xC:
         case 0xD:
         case 0xE:
-        case 0xF: m_logger->log("INSTRUCTION OPCODE NOT IMPLEMENTED!!!", ELogLevel::ERROR); exit(1); break;
+        case 0xF: 
+        default: m_logger->log("INSTRUCTION OPCODE NOT IMPLEMENTED!!!", ELogLevel::ERROR); exit(1); break;
     }
 }
 
