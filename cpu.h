@@ -41,7 +41,7 @@ class TCpu{
     void shift_right_reg();//8XY6
     void subn_vx_vy();//8XY7
     void shift_left_reg();//8XYE
-    void skip_next_reg_vx_vy_ne();//9XYZ
+    void skip_next_instruction_vx_vy_ne();//9XYZ
     void set_index_register();//ANNN
     void jump_with_v0();//BNNN
     void generate_random_number();//CXKK

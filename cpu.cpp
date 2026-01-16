@@ -65,7 +65,7 @@ void TCpu::exec(){
             decode_8_instruction();
             break;
         case 0x9:
-            skip_next_reg_vx_vy_ne();
+            skip_next_instruction_vx_vy_ne();
             break;
         case 0xA:
             set_index_register();
@@ -315,4 +315,72 @@ void TCpu::subn_vx_vy(){
     m_reg[reg_x] = m_reg[reg_y] - m_reg[reg_x];
 }//exist so tht the program can write or subtract in reverse order 
 
+//8XYE
+void TCpu::shift_left_reg(){
+    uint8_t reg = (m_current_opcode >> 8) & 0x0F;
+    if((m_reg[reg]& 0x80)!=0){
+        m_reg[0xF] = 1;
+    }else{
+        m_reg[reg] = 0;
+    }
+    m_reg[reg] <<= 1;
+}//shifts the value 1bit to the left and gets the most significant bit into register
 
+
+//9XYZ
+void TCpu::skip_next_instruction_vx_vy_ne(){
+    uint8_t reg_x = (m_current_opcode >> 8) & 0x0F;
+    uint8_t reg_y = (m_current_opcode >> 4) & 0x0F;
+
+    if(m_reg[reg_x]!= m_reg[reg_y]){
+        m_pcreg +=2;
+    }
+}//helps programe make disitions without using branches also helps change flow of the programe
+
+//ANNN
+void TCpu::set_index_register(){
+    m_ireg = m_current_opcode & 0x0FFF;//helps the programe point to a specific location in memory
+}
+
+//BNNN
+void TCpu::jump_with_v0(){
+    uint16_t NNN = m_current_opcode & 0x0FFF;
+    m_pcreg = NNN + m_reg[0];
+}
+//allows offset based jumps for dynamically changing flow of the code
+
+//CXKK
+
+void TCpu::generate_random_number(){
+    uint8_t reg = (m_current_opcode >> 8)&0x0F;
+    uint8_t kk = m_current_opcode & 0xFF;
+    uint8_t randNUM = rand()%256;
+
+    m_reg[reg] = randNUM & kk;
+}//helps give program controlled randomness for movement and behaviour
+
+//DXYN
+void TCpu::draw_sprite(){
+    uint8_t v_reg_x = (m_current_opcode & 0x0F00)>>8;
+    uint8_t v_reg_y = (m_current_opcode & 0x0F00)>>4;
+    uint8_t sprite_H = m_current_opcode & 0x000F;
+    uint8_t x_location = m_reg[v_reg_x];//drawing strts from here for x
+    uint8_t y_location = m_reg[v_reg_y];//drawing strts from here for y
+
+    m_reg[0xF] = 0;//collision flag
+    for(int y_co = 0;y_co<sprite_H;y_co++){//each sprite row is 1byte=8pixels wide
+        uint8_t pixel = m_machine->RAM[m_ireg+y_co];
+        for(int x_co = 0;x_co<8;x_co++){//each bit correspondes to 1 screen pixel
+            if((pixel & (0x80 >> x_co))!=0){//shifts right inorder to test each bit
+                if (m_machine -> m_screen[y_location+y_co][x_location+x_co] == 1)
+                {
+                    m_reg[0xF] = 1;
+                }
+                m_machine -> m_screen[y_location+y_co][x_location+x_co] ^= 0x1;//helps in drawinf efficiently, and gives smooth animation
+
+            }
+        }
+    }
+}
+
+//EZZZ
