@@ -384,3 +384,40 @@ void TCpu::draw_sprite(){
 }
 
 //EZZZ
+void TCpu::decode_E_instruction(){
+    switch (m_current_opcode & 0xFF)
+    {
+    case 0x009E:
+        skip_next_instruction_if_key_pressed();
+        break;
+    case 0x00A1:
+        skip_next_instruction_if_notKeyPressed();
+        break;
+    
+    default:
+        m_logger->log("Instruction E with code"+to_string(m_current_opcode&0xFF), ELogLevel::ERROR);
+    }
+}//helps react to user input
+
+//EX9E
+void TCpu::skip_next_instruction_if_key_pressed(){
+    uint8_t reg = (m_current_opcode >> 8)&0x0F;
+    uint8_t val = m_reg[reg];
+
+    if(m_machine->m_KEYS[val] != 0){
+        m_pcreg +=2;
+    }
+}//skips to the next instruction if a key is pressed
+
+//EXA1
+void TCpu::skip_next_instruction_if_notKeyPressed(){
+    uint8_t reg = (m_current_opcode >> 8)&0x0F;
+    uint8_t val = m_reg[reg];
+
+    if(m_machine->m_KEYS[val] == 0){
+        m_pcreg +=2;
+    }
+}//skips to the next instruction if a key is not pressed
+
+
+
