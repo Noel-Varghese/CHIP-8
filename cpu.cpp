@@ -419,5 +419,118 @@ void TCpu::skip_next_instruction_if_notKeyPressed(){
     }
 }//skips to the next instruction if a key is not pressed
 
+//FZZZ
 
+void TCpu::decode_F_instruction(){
+    switch (m_current_opcode & 0xFF)
+    {
+    case 0x0007:
+        loadRegWithDelayTimer();
+        break;
+    case 0x000A:
+        waitKeyPress();
+        break;
+    case 0x0015:
+        load_delay_timeWithReg();
+        break;
+    case 0x0018:
+        load_soundTimerWithReg();break;
+    case 0x001E:
+        add_iregWith_reg();
+        break;
+    case 0x0029:
+        load_FontFrom_vx();
+        break;
+    case 0x0033:
+        store_binary_code_decimal_representation();
+        break;
+    case 0x0055:
+        load_memory_from_regs();
+        break;
+    case 0x0065:
+        load_regs_from_memory();
+    default:
+        m_logger->log("Instruction F with code: "+to_string(m_current_opcode & 0xFF), ELogLevel::ERROR);
+        break;
+    }
+}//helps in decoding all of CHIP-8 instruction based on last byte of opcode
+
+//FX07
+
+void TCpu::loadRegWithDelayTimer(){
+    uint8_t reg = (m_current_opcode >> 8) & 0x0F;
+    m_reg[reg] = m_machine->m_delay_timer;
+}
+//loads delay timer into vx
+
+
+//FX0A
+void TCpu::waitKeyPress(){
+    uint8_t reg = (m_current_opcode >> 8) & 0x0F;
+    bool keypressed = false;
+
+    for(int i=0;i<NUM_KEYS;i++){
+        if(m_machine->m_KEYS[i] !=0){
+            m_reg[reg] = i;
+            keypressed = true;
+        }
+    }
+    if(!keypressed){
+        m_pcreg -= 2;
+    }
+}//basically waits for a key press and stores the key index into vx ...also pauses certain instruction until key pressed
+
+//FX15
+
+void TCpu::load_delay_timeWithReg(){
+    uint8_t reg = (m_current_opcode >> 8) & 0x0F;
+    m_machine->m_delay_timer = m_reg[reg];
+}//loads the Vx value into the delay timer 10/10
+
+//FX18
+
+void TCpu::load_soundTimerWithReg(){
+    uint8_t reg = (m_current_opcode >> 8) & 0x0F;
+    m_machine->m_sound_timer = m_reg[reg];
+}//Loads Vx into sound timer <>
+
+//FX1E
+void TCpu::add_iregWith_reg(){
+    uint8_t reg = (m_current_opcode >> 8)&0x0F;
+    m_ireg += m_reg[reg];
+}//helps move the pointer forward , its basically a walk through memory
+
+//FX29
+void TCpu::load_FontFrom_vx(){
+    uint8_t reg = (m_current_opcode >> 8)&0x0F;
+    m_ireg = m_reg[reg] * 0x5;
+}//sprites are loaded contiguously and are 5bytes tall hece we multiply with 0x5 inorder to fetch the next one
+
+//FX33
+void TCpu::store_binary_code_decimal_representation(){
+    uint8_t reg = (m_current_opcode >> 8) & 0x0F;
+
+    m_machine->RAM[m_ireg] = m_reg[reg]/100;
+    m_machine->RAM[m_ireg+1] = (m_reg[reg]/10)%10;
+    m_machine->RAM[m_ireg+1] = (m_reg[reg]%100)%10;
+}
+//uses binary values to help display decimal on screen
+
+//FX55
+void TCpu::load_memory_from_regs(){
+    uint8_t reg = (m_current_opcode >> 8) & 0x0F;
+    for(int i =0;i<=reg;i++){
+        m_machine->RAM[m_ireg+i] = m_reg[i];
+    }
+    m_ireg += (reg+1);
+}//helps in bulk saving values, its a register dump(copying current contents of CPU registers into memory)
+
+//FX65
+void TCpu::load_regs_from_memory(){
+    uint8_t reg = (m_current_opcode >> 8) & 0x0F;
+    for(int i=0; i<=reg; i++)
+        m_reg[i] = m_machine->RAM[m_ireg + i];
+
+    m_ireg += (reg + 1);
+}//restores saved states, reload data from memory,....., it is the inverse of register dump
 
