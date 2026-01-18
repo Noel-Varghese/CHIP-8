@@ -10,12 +10,6 @@ int main(int argc, char** argv){//helps in taking in the roms later on :)
     shared_ptr<TLogger> logger = TLogger::getInstance();
     cmdParser.parseCMDLine(argc, argv);
     TDisplaySDL display;
-    TChip8 emulate;
-
-    emulate.setDisplay(&display);
-    emulate.init(cmdParser.getRomFileName());
-    emulate.run();
-    emulate.deinit();
     if(cmdParser.isLogLevelSet()){
         //shared_ptr<TLogger> logger = TLogger::getInstance();
         switch (cmdParser.getLogLevel())
@@ -34,6 +28,8 @@ int main(int argc, char** argv){//helps in taking in the roms later on :)
     logger->log("Rom path provided: "+cmdParser.getRomFileName(), ELogLevel::INFO);
 
     TChip8 emu;
+    display.init();
+    emu.setDisplay(&display);
     emu.init(cmdParser.getRomFileName());//gets the rom file and then sends it to the chip8
     emu.run();
     emu.deinit();

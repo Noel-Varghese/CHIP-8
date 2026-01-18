@@ -53,14 +53,15 @@ void TDisplaySDL::init(){
 }
 
 void TDisplaySDL::draw(uint8_t framebuffer[][64], uint16_t height, uint16_t width){
-    void* pixels = nullptr;
-    int pitch = 0;
+    //raw texture setup
+    void* pixels = nullptr;//points to raw texture memory
+    int pitch = 0;//number of bytes per row
     if(SDL_LockTexture(m_texture, nullptr, &pixels, &pitch)!=0){
         string errortexture(SDL_GetError());
         m_logger->log("Texture error: "+errortexture, ELogLevel::ERROR);
         return;
     }
-    uint32_t* textPixels = static_cast<uint32_t*>(pixels);
+    uint32_t* textPixels = static_cast<uint32_t*>(pixels);//makes pixel useable
     for(int y =0 ;y<height;y++){
         for(int x=0;x<width;x++){
             uint32_t color = framebuffer[y][x]?0xFF00FF00/*green*/:0xFF000000/*Black*/;
@@ -73,17 +74,17 @@ void TDisplaySDL::draw(uint8_t framebuffer[][64], uint16_t height, uint16_t widt
 void TDisplaySDL::update(){
     SDL_RenderClear(m_rend);
 
-    SDL_FRect dst;
-    dst.x = 0.0f;
-    dst.y = 0.0f;
-    dst.w = 64.0f*m_scale;
-    dst.h = 32.0f*m_scale;
+    SDL_FRect dst;//used for scaling and positioning
+    dst.x = 0.0f;//draws from the left edge
+    dst.y = 0.0f;//draws from the top edge
+    dst.w = 64.0f*m_scale;//sets the width
+    dst.h = 32.0f*m_scale;//sets the height
 
-    SDL_RenderTexture(m_rend, m_texture, nullptr, &dst);
-    SDL_RenderPresent(m_rend);
+    SDL_RenderTexture(m_rend, m_texture, nullptr, &dst);//takes in texture renders it and scales it using dst
+    SDL_RenderPresent(m_rend);//makes the frame visible on screen
 
     SDL_Event e;
-    while(SDL_PollEvent(&e)){
+    while(SDL_PollEvent(&e)){//helps pull all pending events
         if(e.type == SDL_EVENT_QUIT){
             m_logger->log("Closing Emulator: ", ELogLevel::INFO);
         }
