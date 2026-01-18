@@ -1,6 +1,7 @@
 #include <iostream>
 #include "logger.h"
 #include "cmdLineParser.h"
+#include "displaySDL.h"
 #include "chip8.h"
 using namespace std;
 
@@ -8,6 +9,13 @@ int main(int argc, char** argv){//helps in taking in the roms later on :)
     TCmdLineParser cmdParser;
     shared_ptr<TLogger> logger = TLogger::getInstance();
     cmdParser.parseCMDLine(argc, argv);
+    TDisplaySDL display;
+    TChip8 emulate;
+
+    emulate.setDisplay(&display);
+    emulate.init(cmdParser.getRomFileName());
+    emulate.run();
+    emulate.deinit();
     if(cmdParser.isLogLevelSet()){
         //shared_ptr<TLogger> logger = TLogger::getInstance();
         switch (cmdParser.getLogLevel())

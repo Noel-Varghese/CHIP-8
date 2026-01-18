@@ -6,7 +6,9 @@ using namespace std;
 
 TChip8::TChip8(){
     m_logger = TLogger::getInstance();
+    m_cpu = new TCpu(this);
     m_emulator_running = true;
+    m_display = nullptr;
 }
 TChip8::~TChip8(){
 
@@ -37,6 +39,7 @@ void TChip8::init(string rom_path){
     m_loader = new TRomLoader();
     m_loader->LoadRom(rom_path, RAM+CHIP8_STRT_ADDR);//loads the ROM
     delete m_loader;
+    m_display->init();
 }
 
 void TChip8::run(){
@@ -44,10 +47,17 @@ void TChip8::run(){
         m_cpu->fetch();
         m_cpu->decode();
         m_cpu->exec();
+        m_display->draw(m_screen, SCREEN_H, SCREEN_W);
+        m_display->update();
     }
 }
 
 void TChip8::deinit(){
     //to de initialize whatever we intialized :) for shutdown 
     m_cpu->deinit();
+    m_display->deinit();
+}
+
+void TChip8::setDisplay(TDisplay* display){
+    m_display = display;
 }
