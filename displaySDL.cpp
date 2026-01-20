@@ -1,15 +1,11 @@
 #include <cstdint>
-#include <SDL3/SDL.h>
+#include <SDL2/SDL.h>
 
 #include "displaySDL.h"
 using namespace std;
 
 TDisplaySDL::TDisplaySDL(){
     m_logger = TLogger::getInstance();
-    m_window = nullptr;
-    m_rend = nullptr;
-    m_texture = nullptr;
-    m_scale = 20;//for the window 64*20 = 1280 and 32*20 = 640
 }
 TDisplaySDL::~TDisplaySDL(){
     void deinit();
