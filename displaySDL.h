@@ -2,20 +2,15 @@
 #define __DISPLAYSDL_H__
 
 #include <cstdint>
+#include <SDL2/SDL.h>
 
 #include "display.h"
 #include "logger.h"
 
 
-struct SDL_Window;
-struct SDL_Renderer;
-struct SDL_Texture;
-
 class TDisplaySDL:public TDisplay{
     SDL_Window* m_window;
-    SDL_Renderer* m_rend;
-    SDL_Texture* m_texture;
-    int m_scale;
+    SDL_Surface* m_surface;
     std::shared_ptr<TLogger> m_logger;
     public:
         TDisplaySDL();
