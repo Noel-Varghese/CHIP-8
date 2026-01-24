@@ -13,7 +13,7 @@ TDisplaySDL::~TDisplaySDL(){
 
 void TDisplaySDL::init()
 {
-    // Initialize SDL
+    // To initialize it
     if (SDL_Init(SDL_INIT_VIDEO) != 0) 
     {
         std::string errorSdl(SDL_GetError());
@@ -21,8 +21,7 @@ void TDisplaySDL::init()
         exit(1);
     }
 
-    // Create a window accordingly 
-    m_window = SDL_CreateWindow("TMVTech chip8",
+    m_window = SDL_CreateWindow("CHIP 8",//names the window and creates it accordingly
                                 SDL_WINDOWPOS_UNDEFINED,
                                 SDL_WINDOWPOS_UNDEFINED,
                                 1280, 720, SDL_WINDOW_SHOWN);
@@ -57,7 +56,7 @@ void TDisplaySDL::draw(uint8_t framebuffer[][64], uint16_t width, uint16_t heigh
     // Fills the entire surface with the black color
     SDL_FillRect(m_surface, NULL, color);
 
-    Uint32 white =//For white color SDL_MapRGB(m_surface->format, 255, 255, 255); 
+    Uint32 white = SDL_MapRGB(m_surface->format, 255, 255, 255);//For white color SDL_MapRGB(m_surface->format, 255, 255, 255); 
     Uint32 green = SDL_MapRGB(m_surface->format, 0, 255, 0);  //For Green color
 
     for(auto i=0; i<height; i++)

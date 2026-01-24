@@ -8,7 +8,10 @@
 # SDL runtime files
 *.dll
 SDL3/
-
+src/
+*.git-hash
+*ignore
+*README-SDL.txt
 # VS Code
 .vscode/
 

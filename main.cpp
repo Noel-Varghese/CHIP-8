@@ -1,3 +1,5 @@
+#define SDL_MAIN_HANDLED
+
 #include <iostream>
 #include "logger.h"
 #include "cmdLineParser.h"
