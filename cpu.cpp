@@ -53,7 +53,11 @@ void TCpu::exec(){
             skip_next_instruction_ne();
             break;
         case 0x5:
-            skip_next_instruction_vx_vy();
+            if ((m_current_opcode & 0x000F) == 0){
+                skip_next_instruction_vx_vy();
+            }else{
+                m_logger->log("Invalid 5XY opcode", ELogLevel::ERROR);
+            }
             break;
         case 0x6:
             register_set();
@@ -65,7 +69,11 @@ void TCpu::exec(){
             decode_8_instruction();
             break;
         case 0x9:
-            skip_next_instruction_vx_vy_ne();
+            if ((m_current_opcode & 0x000F) == 0x0) {
+                skip_next_instruction_vx_vy_ne();
+            } else {
+                m_logger->log("Invalid 9XY opcode", ELogLevel::ERROR);
+            }
             break;
         case 0xA:
             set_index_register();
@@ -108,7 +116,8 @@ void TCpu::decode_0_instruction(){
             return_from_subroutine();
             break;
         default:
-            m_logger->log("Instruction 0 with code"+to_string(m_current_opcode&0xFF), ELogLevel::ERROR);
+            //m_logger->log("Instruction 0 with code"+to_string(m_current_opcode&0xFF), ELogLevel::ERROR);
+            break;
     }
 }
 //0ZE0
@@ -124,8 +133,11 @@ void TCpu::clear_screen(){
 //0ZEE
 
 void TCpu::return_from_subroutine(){
-    m_sp_reg--;
-    m_pcreg = m_machine->m_STACK[m_sp_reg];
+    if (m_sp_reg == 0) {
+        m_logger->log("STACK UNDERFLOW", ELogLevel::ERROR);
+        return;
+    }
+    m_pcreg = m_machine->m_STACK[--m_sp_reg];
 }//Loads the return address
 
 //1NNN
@@ -141,6 +153,10 @@ void TCpu::call_subroutine(){
     m_machine->m_STACK[m_sp_reg] =m_pcreg;
     m_sp_reg++;
     m_pcreg = NNN; 
+    if (m_sp_reg >= STACK_SIZE) {
+        m_logger->log("STACK OVERFLOW", ELogLevel::ERROR);
+        return;
+    }
 }//saves the current program counter to the stack, jumps to a subroutine, and then later through RET
 
 //3XNN
@@ -277,7 +293,7 @@ void TCpu::sub_vx_vy(){
     uint8_t reg_x = (m_current_opcode >> 8)&0x0F;
     uint8_t reg_y = (m_current_opcode >> 4)&0x0F;
 
-    if(m_reg[reg_x]>m_reg[reg_y]){
+    if(m_reg[reg_x]>=m_reg[reg_y]){
         m_reg[0xF] = 1;
     }else{
         m_reg[0xF] = 0;
@@ -307,7 +323,7 @@ void TCpu::subn_vx_vy(){
     uint8_t reg_x = (m_current_opcode >> 8) & 0x0F;
     uint8_t reg_y = (m_current_opcode >> 4) & 0x0F;
 
-    if(m_reg[reg_y] > m_reg[reg_x])
+    if(m_reg[reg_y] >= m_reg[reg_x])
         m_reg[0xF] = 1;
     else
         m_reg[0xF] = 0;
@@ -318,11 +334,7 @@ void TCpu::subn_vx_vy(){
 //8XYE
 void TCpu::shift_left_reg(){
     uint8_t reg = (m_current_opcode >> 8) & 0x0F;
-    if((m_reg[reg]& 0x80)!=0){
-        m_reg[0xF] = 1;
-    }else{
-        m_reg[reg] = 0;
-    }
+    m_reg[0xF] = (m_reg[reg] & 0x80) >> 7;
     m_reg[reg] <<= 1;
 }//shifts the value 1bit to the left and gets the most significant bit into register
 
@@ -362,21 +374,25 @@ void TCpu::generate_random_number(){
 //DXYN
 void TCpu::draw_sprite(){
     uint8_t v_reg_x = (m_current_opcode & 0x0F00)>>8;
-    uint8_t v_reg_y = (m_current_opcode & 0x0F00)>>4;
+    uint8_t v_reg_y = (m_current_opcode & 0x00F0)>>4;
     uint8_t sprite_H = m_current_opcode & 0x000F;
     uint8_t x_location = m_reg[v_reg_x];//drawing strts from here for x
     uint8_t y_location = m_reg[v_reg_y];//drawing strts from here for y
+    
 
     m_reg[0xF] = 0;//collision flag
     for(int y_co = 0;y_co<sprite_H;y_co++){//each sprite row is 1byte=8pixels wide
         uint8_t pixel = m_machine->RAM[m_ireg+y_co];
         for(int x_co = 0;x_co<8;x_co++){//each bit correspondes to 1 screen pixel
             if((pixel & (0x80 >> x_co))!=0){//shifts right inorder to test each bit
-                if (m_machine -> m_screen[y_location+y_co][x_location+x_co] == 1)
+                uint8_t x = (x_location + x_co) % SCREEN_W;
+                uint8_t y = (y_location + y_co) % SCREEN_H;//helps the sprites to wrap around the screen
+
+                if (m_machine -> m_screen[y][x] == 1)
                 {
                     m_reg[0xF] = 1;
                 }
-                m_machine -> m_screen[y_location+y_co][x_location+x_co] ^= 0x1;//helps in drawinf efficiently, and gives smooth animation
+                m_machine -> m_screen[y][x] ^= 0x1;//helps in drawinf efficiently, and gives smooth animation
 
             }
         }
@@ -385,12 +401,12 @@ void TCpu::draw_sprite(){
 
 //EZZZ
 void TCpu::decode_E_instruction(){
-    switch (m_current_opcode & 0xFF)
+    switch (m_current_opcode & 0x00FF)
     {
-    case 0x009E:
+    case 0x9E:
         skip_next_instruction_if_key_pressed();
         break;
-    case 0x00A1:
+    case 0xA1:
         skip_next_instruction_if_notKeyPressed();
         break;
     
@@ -422,33 +438,34 @@ void TCpu::skip_next_instruction_if_notKeyPressed(){
 //FZZZ
 
 void TCpu::decode_F_instruction(){
-    switch (m_current_opcode & 0xFF)
+    switch (m_current_opcode & 0x00FF)
     {
-    case 0x0007:
+    case 0x07:
         loadRegWithDelayTimer();
         break;
-    case 0x000A:
+    case 0x0A:
         waitKeyPress();
         break;
-    case 0x0015:
+    case 0x15:
         load_delay_timeWithReg();
         break;
-    case 0x0018:
+    case 0x18:
         load_soundTimerWithReg();break;
-    case 0x001E:
+    case 0x1E:
         add_iregWith_reg();
         break;
-    case 0x0029:
+    case 0x29:
         load_FontFrom_vx();
         break;
-    case 0x0033:
+    case 0x33:
         store_binary_code_decimal_representation();
         break;
-    case 0x0055:
+    case 0x55:
         load_memory_from_regs();
         break;
-    case 0x0065:
+    case 0x65:
         load_regs_from_memory();
+        break;
     default:
         m_logger->log("Instruction F with code: "+to_string(m_current_opcode & 0xFF), ELogLevel::ERROR);
         break;
@@ -512,7 +529,7 @@ void TCpu::store_binary_code_decimal_representation(){
 
     m_machine->RAM[m_ireg] = m_reg[reg]/100;
     m_machine->RAM[m_ireg+1] = (m_reg[reg]/10)%10;
-    m_machine->RAM[m_ireg+1] = (m_reg[reg]%100)%10;
+    m_machine->RAM[m_ireg+2] = (m_reg[reg])%10;
 }
 //uses binary values to help display decimal on screen
 
@@ -522,15 +539,13 @@ void TCpu::load_memory_from_regs(){
     for(int i =0;i<=reg;i++){
         m_machine->RAM[m_ireg+i] = m_reg[i];
     }
-    m_ireg += (reg+1);
 }//helps in bulk saving values, its a register dump(copying current contents of CPU registers into memory)
 
 //FX65
 void TCpu::load_regs_from_memory(){
     uint8_t reg = (m_current_opcode >> 8) & 0x0F;
-    for(int i=0; i<=reg; i++)
+    for(int i=0; i<=reg; i++){
         m_reg[i] = m_machine->RAM[m_ireg + i];
-
-    m_ireg += (reg + 1);
+    }
 }//restores saved states, reload data from memory,....., it is the inverse of register dump
 

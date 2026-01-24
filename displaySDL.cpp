@@ -24,7 +24,7 @@ void TDisplaySDL::init()
     m_window = SDL_CreateWindow("CHIP 8",//names the window and creates it accordingly
                                 SDL_WINDOWPOS_UNDEFINED,
                                 SDL_WINDOWPOS_UNDEFINED,
-                                1280, 720, SDL_WINDOW_SHOWN);
+                                1290, 720, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
 
     if(!m_window)
     {
@@ -43,20 +43,20 @@ void setPixel(SDL_Surface *surface, int x, int y, Uint32 color) {
     }
 }
 
-void TDisplaySDL::draw(uint8_t framebuffer[][64], uint16_t width, uint16_t height)
+void TDisplaySDL::draw(uint8_t framebuffer[][64], uint16_t height, uint16_t width)
 {
-    uint8_t zoomFactor = 10;
+    uint8_t zoomFactor = 20;
 
-    if(SDL_MUSTLOCK(m_surface))
+    if(SDL_MUSTLOCK(m_surface)){
         SDL_LockSurface(m_surface);
-
+    }
     // Clear the screen
     Uint32 color = SDL_MapRGB(m_surface->format, 0x00, 0x00, 0x00); // For Black color
 
     // Fills the entire surface with the black color
     SDL_FillRect(m_surface, NULL, color);
 
-    Uint32 white = SDL_MapRGB(m_surface->format, 255, 255, 255);//For white color SDL_MapRGB(m_surface->format, 255, 255, 255); 
+    //Uint32 white = SDL_MapRGB(m_surface->format, 255, 255, 255);//For white color SDL_MapRGB(m_surface->format, 255, 255, 255); 
     Uint32 green = SDL_MapRGB(m_surface->format, 0, 255, 0);  //For Green color
 
     for(auto i=0; i<height; i++)
@@ -64,31 +64,33 @@ void TDisplaySDL::draw(uint8_t framebuffer[][64], uint16_t width, uint16_t heigh
         for(auto j=0; j<width; j++)
         {
             if(framebuffer[i][j] == 1)
-            {
-                for (auto x = 0; x < zoomFactor; x++)
-                {
-                    for (auto y = 0; y < zoomFactor; y++)
-                    {
-                        setPixel(m_surface, j*zoomFactor+x, i*zoomFactor+y, green);
-                    }
-                }
+            {//helps in scalling the pixel
+                SDL_Rect pixelRect;
+                pixelRect.x = j*zoomFactor;
+                pixelRect.y = i*zoomFactor;
+                pixelRect.w = zoomFactor;
+                pixelRect.h = zoomFactor;
+
+                SDL_FillRect(m_surface, &pixelRect, green);//simpler way of draw pixels compared to for loop
             }
         }   
     }
         
 
-    if(SDL_MUSTLOCK(m_surface))
+    if(SDL_MUSTLOCK(m_surface)){
         SDL_UnlockSurface(m_surface);
+    }
+    SDL_UpdateWindowSurface(m_window);
 }
 
 void TDisplaySDL::update()
 {
-    SDL_UpdateWindowSurface(m_window);
     SDL_Event e;
-    if (SDL_PollEvent(&e) != 0) 
+    while(SDL_PollEvent(&e) != 0) 
     {
         if (e.type == SDL_QUIT) {
             m_logger->log("CLOSING: ", ELogLevel::ERROR);
+            exit(0);
         }
     }
 }

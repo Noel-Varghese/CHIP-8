@@ -3,7 +3,7 @@
 #include "cpu.h"
 #include <chrono>
 #include <thread>
-
+#include <SDL2/SDL.h>
 
 
 TChip8::TChip8(){
@@ -40,6 +40,7 @@ void TChip8::init(std::string rom_path){
     m_key_pressed = false;
     m_loader = new TRomLoader();
     m_loader->LoadRom(rom_path, RAM+CHIP8_STRT_ADDR);//loads the ROM
+    m_cpu->init();
     delete m_loader;
     //m_display->init();
 }
@@ -47,17 +48,17 @@ void TChip8::init(std::string rom_path){
 void TChip8::run(){
     using clock = std::chrono::high_resolution_clock;
     clock::time_point start, end;
-    const std::chrono::milliseconds desired_cycle_time(1);
+    const std::chrono::milliseconds desired_cycle_time(2);
     int display_updateDelayTime = 0;
+    static int time_accumulator = 0;
     while(m_emulator_running){
         start = clock::now();
         m_cpu->fetch();
         m_cpu->decode();
         m_cpu->exec();
-        if(display_updateDelayTime >=20){//updates the timer in ~60Hz
-            display_updateDelayTime = 0;
+        if(time_accumulator >= 16){//updates the timer in ~60Hz
+            time_accumulator = 0;
             m_display->draw(m_screen, SCREEN_H, SCREEN_W);
-            m_display->update();
             if(m_delay_timer > 0){
                 m_delay_timer--;
             }
@@ -65,16 +66,19 @@ void TChip8::run(){
                 m_sound_timer--;
             }
         }
+        m_display->update();
         end = clock::now();
         std::chrono::duration<double, std::micro> loop_time = end-start;
         //inorder to calculate the elapsed time in millisecond
         auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(end-start);
         //calculates minimum time to reach the desired cycle time
+        time_accumulator += elapsed_time.count();
         auto sleep_time = desired_cycle_time - elapsed_time;
         if(sleep_time.count() > 0){
             std::this_thread::sleep_for(sleep_time);
         }
-        display_updateDelayTime++;
+        //display_updateDelayTime++;
+        //SDL_Delay(2);
     }
 }
 
