@@ -7,10 +7,13 @@
 #include "display.h"
 #include "logger.h"
 
+#include <memory>
 
 class TDisplaySDL:public TDisplay{
     SDL_Window* m_window;
-    SDL_Surface* m_surface;
+    // SDL_Surface* m_surface;
+    SDL_Renderer* m_rend;
+    SDL_Texture* m_texture;
     std::shared_ptr<TLogger> m_logger;
     public:
         TDisplaySDL();
