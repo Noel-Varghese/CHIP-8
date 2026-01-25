@@ -7,6 +7,7 @@
 #include "romLoader.h"
 #include "display.h"
 #include "keyboard.h"
+#include "sound.h"
 //defines basic utilities like font etc.
 #define NUM_KEYS 16
 #define TOTAL_RAM 4096
@@ -66,6 +67,7 @@ class TChip8{
     TRomLoader* m_loader;
     TDisplay* m_display;
     TKeyboard* m_keyboard;
+    TSound* m_sound;
     public:
         TChip8();
         /*We use a constructor to put the CHIP-8 machine into a valid starting state,
@@ -77,6 +79,7 @@ which usually happens when the program exits (i.e., you close the emulator). */
             void deinit();
             void setDisplay(TDisplay* display);
             void setKeyboard(TKeyboard* keyboard);
+            void setSound(TSound* sound);
 
 };  
 

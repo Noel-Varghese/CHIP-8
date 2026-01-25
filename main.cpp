@@ -6,6 +6,7 @@
 #include "displaySDL.h"
 #include "chip8.h"
 #include "keyboardSDL.h"
+#include "soundSDL.h"
 using namespace std;
 
 int main(int argc, char** argv){//helps in taking in the roms later on :)
@@ -14,6 +15,7 @@ int main(int argc, char** argv){//helps in taking in the roms later on :)
     cmdParser.parseCMDLine(argc, argv);
     TDisplaySDL display;
     TKeyboardSDL keyboard;
+    TSoundSDL sound;
     if(cmdParser.isLogLevelSet()){
         //shared_ptr<TLogger> logger = TLogger::getInstance();
         switch (cmdParser.getLogLevel())
@@ -35,6 +37,7 @@ int main(int argc, char** argv){//helps in taking in the roms later on :)
     display.init();
     emu.setDisplay(&display);
     emu.setKeyboard(&keyboard);
+    emu.setSound(&sound);
     emu.init(cmdParser.getRomFileName());//gets the rom file and then sends it to the chip8
     emu.run();
     emu.deinit();

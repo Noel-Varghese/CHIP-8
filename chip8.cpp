@@ -12,6 +12,7 @@ TChip8::TChip8(){
     m_emulator_running = true;
     m_display = nullptr;
     m_keyboard = nullptr;
+    m_sound = nullptr;
 }
 TChip8::~TChip8(){
 
@@ -44,6 +45,7 @@ void TChip8::init(std::string rom_path){
     m_cpu->init();
     delete m_loader;
     m_keyboard->init();
+    m_sound->init();
 }
 
 void TChip8::run(){
@@ -65,6 +67,9 @@ void TChip8::run(){
             }
             if(m_sound_timer > 0){
                 m_sound_timer--;
+                m_sound->playTune();
+            }else{
+                m_sound->pauseT();
             }
         }
         //m_display->update();
@@ -90,6 +95,7 @@ void TChip8::deinit(){
     m_cpu->deinit();
     m_display->deinit();
     m_keyboard->deinit();
+    m_sound->deinit();
 }
 
 void TChip8::setKeyboard(TKeyboard* keyboard){
@@ -98,4 +104,8 @@ void TChip8::setKeyboard(TKeyboard* keyboard){
 
 void TChip8::setDisplay(TDisplay* display){
     m_display = display;
+}
+
+void TChip8::setSound(TSound* sound){
+    m_sound = sound;
 }
