@@ -11,6 +11,7 @@ TChip8::TChip8(){
     m_cpu = new TCpu(this);
     m_emulator_running = true;
     m_display = nullptr;
+    m_keyboard = nullptr;
 }
 TChip8::~TChip8(){
 
@@ -42,7 +43,7 @@ void TChip8::init(std::string rom_path){
     m_loader->LoadRom(rom_path, RAM+CHIP8_STRT_ADDR);//loads the ROM
     m_cpu->init();
     delete m_loader;
-    //m_display->init();
+    m_keyboard->init();
 }
 
 void TChip8::run(){
@@ -66,17 +67,19 @@ void TChip8::run(){
                 m_sound_timer--;
             }
         }
-        m_display->update();
+        //m_display->update();
+        m_keyboard->update(m_KEYS, &m_emulator_running);
         end = clock::now();
         std::chrono::duration<double, std::micro> loop_time = end-start;
         //inorder to calculate the elapsed time in millisecond
         auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(end-start);
         //calculates minimum time to reach the desired cycle time
-        time_accumulator += elapsed_time.count();
+        //time_accumulator += elapsed_time.count();
         auto sleep_time = desired_cycle_time - elapsed_time;
         if(sleep_time.count() > 0){
             std::this_thread::sleep_for(sleep_time);
         }
+        time_accumulator += desired_cycle_time.count();
         //display_updateDelayTime++;
         //SDL_Delay(2);
     }
@@ -85,6 +88,12 @@ void TChip8::run(){
 void TChip8::deinit(){
     //to de initialize whatever we intialized :) for shutdown 
     m_cpu->deinit();
+    m_display->deinit();
+    m_keyboard->deinit();
+}
+
+void TChip8::setKeyboard(TKeyboard* keyboard){
+    m_keyboard = keyboard;
 }
 
 void TChip8::setDisplay(TDisplay* display){

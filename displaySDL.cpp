@@ -118,14 +118,15 @@ void TDisplaySDL::draw(uint8_t framebuffer[][64], uint16_t height, uint16_t widt
 
 void TDisplaySDL::update()
 {
-    SDL_Event e;
-    while(SDL_PollEvent(&e) != 0) 
-    {
-        if (e.type == SDL_QUIT) {
-            m_logger->log("CLOSING: ", ELogLevel::ERROR);
-            exit(0);
-        }
-    }
+    // SDL_Event e;
+    // while(SDL_PollEvent(&e) != 0) 
+    // {
+    //     if (e.type == SDL_QUIT) {
+    //         m_logger->log("CLOSING: ", ELogLevel::ERROR);
+    //         exit(0);
+    //     }
+    // }
+    //since the keyboard handles event this part is not necessary
 }
 
 void TDisplaySDL::deinit()

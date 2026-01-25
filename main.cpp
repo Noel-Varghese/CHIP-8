@@ -5,6 +5,7 @@
 #include "cmdLineParser.h"
 #include "displaySDL.h"
 #include "chip8.h"
+#include "keyboardSDL.h"
 using namespace std;
 
 int main(int argc, char** argv){//helps in taking in the roms later on :)
@@ -12,6 +13,7 @@ int main(int argc, char** argv){//helps in taking in the roms later on :)
     shared_ptr<TLogger> logger = TLogger::getInstance();
     cmdParser.parseCMDLine(argc, argv);
     TDisplaySDL display;
+    TKeyboardSDL keyboard;
     if(cmdParser.isLogLevelSet()){
         //shared_ptr<TLogger> logger = TLogger::getInstance();
         switch (cmdParser.getLogLevel())
@@ -32,6 +34,7 @@ int main(int argc, char** argv){//helps in taking in the roms later on :)
     TChip8 emu;
     display.init();
     emu.setDisplay(&display);
+    emu.setKeyboard(&keyboard);
     emu.init(cmdParser.getRomFileName());//gets the rom file and then sends it to the chip8
     emu.run();
     emu.deinit();
