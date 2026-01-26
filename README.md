@@ -82,4 +82,5 @@ soundSDL.cpp/h: Implements real-time audio synthesis via DSP callbacks.
 keyboardSDL.cpp/h: Responsible for input handling and key mapping.
 romLoader.cpp/h: Binary file I/O for loading programs into memory at offset 0x200.
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-documentation:[Chip-8 journal.pdf](https://github.com/user-attachments/files/24852299/Chip-8.journal.pdf)
+documentation:[Chip-8 journal.pdf](https://github.com/user-attachments/files/24852329/Chip-8.journal.pdf)
+
