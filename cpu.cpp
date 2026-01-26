@@ -108,6 +108,9 @@ void TCpu::deinit(){
 */
 
 void TCpu::decode_0_instruction(){
+    if((m_current_opcode & 0xF000) != 0x0000){
+        return;
+    }
     switch(m_current_opcode&0xFF){
         case 0xE0:
             clear_screen();
@@ -278,13 +281,10 @@ void TCpu::add_vx_vy(){
     uint8_t reg_x = (m_current_opcode >> 8)&0x0F;
     uint8_t reg_y = (m_current_opcode >> 4)&0x0F;
     uint16_t add = m_reg[reg_x]+m_reg[reg_y];
-
-    if(add > 0xFF){
-        m_reg[0xF] = 1;
-    }else{
-        m_reg[0xF] = 0;
-    }   
-     m_reg[reg_x] = add & 0xFF;
+    uint8_t cf = (add > 0xFF)? 1:0;
+    m_reg[reg_x] = add & 0xFF;
+    m_reg[0xF] = cf;
+ 
 }//allows the program to add two register values while also detecting overflows which is required for the math and game logic
 
 //8XY5
@@ -292,27 +292,24 @@ void TCpu::add_vx_vy(){
 void TCpu::sub_vx_vy(){
     uint8_t reg_x = (m_current_opcode >> 8)&0x0F;
     uint8_t reg_y = (m_current_opcode >> 4)&0x0F;
+    uint8_t nbf = (m_reg[reg_x] >= m_reg[reg_y])?1:0;
 
-    if(m_reg[reg_x]>=m_reg[reg_y]){
-        m_reg[0xF] = 1;
-    }else{
-        m_reg[0xF] = 0;
-    }
     m_reg[reg_x] -= m_reg[reg_y];
+    m_reg[0xF] = nbf;
 }//subtracts two registers whilw giving borrow logic, for arithmatic, game logic etc
 
 
 //8XY6
 
 void TCpu::shift_right_reg(){
-    uint8_t reg = (m_current_opcode >> 8) & 0x0F;
+    uint8_t vx = (m_current_opcode >> 8) & 0x0F;
+    uint8_t vy = (m_current_opcode >> 4) & 0x0F;
+    uint8_t flag = m_reg[vx] & 0x1;
+    m_reg[vx] = m_reg[vy];
 
-    if(m_reg[reg]%2 == 1){
-        m_reg[0xF] = 1;
-    }else{
-        m_reg[0xF] =0;
-    }
-    m_reg[reg] >>= 1;
+
+    m_reg[vx] >>= 1;
+    m_reg[0xF] = flag;
 }
 //lets the program to divide the value by 2 and to capture the bits tht gets shifted out
 //usefull for arithmatic, movements and bit-level logic
@@ -322,20 +319,25 @@ void TCpu::shift_right_reg(){
 void TCpu::subn_vx_vy(){
     uint8_t reg_x = (m_current_opcode >> 8) & 0x0F;
     uint8_t reg_y = (m_current_opcode >> 4) & 0x0F;
+    uint8_t no_borrow_flag = (m_reg[reg_y] >= m_reg[reg_x]) ? 1 : 0;
 
-    if(m_reg[reg_y] >= m_reg[reg_x])
-        m_reg[0xF] = 1;
-    else
-        m_reg[0xF] = 0;
+    
 
     m_reg[reg_x] = m_reg[reg_y] - m_reg[reg_x];
+    m_reg[0xF] = no_borrow_flag;
 }//exist so tht the program can write or subtract in reverse order 
 
 //8XYE
 void TCpu::shift_left_reg(){
-    uint8_t reg = (m_current_opcode >> 8) & 0x0F;
-    m_reg[0xF] = (m_reg[reg] & 0x80) >> 7;
-    m_reg[reg] <<= 1;
+    uint8_t vx = (m_current_opcode >> 8) & 0x0F;
+    uint8_t vy = (m_current_opcode >> 4) & 0x0F;
+    uint8_t flag = (m_reg[vx] & 0x80) >> 7;
+    m_reg[vx] = m_reg[vy];
+    m_reg[vx] <<= 1;
+    m_reg[0xF] = flag;
+
+    // m_reg[0xF] = (m_reg[reg] & 0x80) >> 7;
+    // m_reg[reg] <<= 1;
 }//shifts the value 1bit to the left and gets the most significant bit into register
 
 
@@ -376,23 +378,25 @@ void TCpu::draw_sprite(){
     uint8_t v_reg_x = (m_current_opcode & 0x0F00)>>8;
     uint8_t v_reg_y = (m_current_opcode & 0x00F0)>>4;
     uint8_t sprite_H = m_current_opcode & 0x000F;
-    uint8_t x_location = m_reg[v_reg_x];//drawing strts from here for x
-    uint8_t y_location = m_reg[v_reg_y];//drawing strts from here for y
+    uint8_t x_location = m_reg[v_reg_x] % 64;//drawing strts from here for x
+    uint8_t y_location = m_reg[v_reg_y] % 32;//drawing strts from here for y
     
 
     m_reg[0xF] = 0;//collision flag
     for(int y_co = 0;y_co<sprite_H;y_co++){//each sprite row is 1byte=8pixels wide
-        uint8_t pixel = m_machine->RAM[m_ireg+y_co];
+        uint8_t pixel = m_machine->RAM[(m_ireg+y_co) & 0xFFF];
         for(int x_co = 0;x_co<8;x_co++){//each bit correspondes to 1 screen pixel
             if((pixel & (0x80 >> x_co))!=0){//shifts right inorder to test each bit
-                uint8_t x = (x_location + x_co) % SCREEN_W;
-                uint8_t y = (y_location + y_co) % SCREEN_H;//helps the sprites to wrap around the screen
-
+                uint8_t x = (x_location + x_co);
+                uint8_t y = (y_location + y_co);//helps the sprites to wrap around the screen
+                if(x>=64 || y>=32){
+                    continue;
+                }
                 if (m_machine -> m_screen[y][x] == 1)
                 {
                     m_reg[0xF] = 1;
                 }
-                m_machine -> m_screen[y][x] ^= 0x1;//helps in drawinf efficiently, and gives smooth animation
+                m_machine -> m_screen[y][x] ^= 0x1;//helps in drawing efficiently, and gives smooth animation
 
             }
         }
@@ -418,7 +422,7 @@ void TCpu::decode_E_instruction(){
 //EX9E
 void TCpu::skip_next_instruction_if_key_pressed(){
     uint8_t reg = (m_current_opcode >> 8)&0x0F;
-    uint8_t val = m_reg[reg];
+    uint8_t val = m_reg[reg] & 0x0F;
 
     if(m_machine->m_KEYS[val] != 0){
         m_pcreg +=2;
@@ -428,7 +432,7 @@ void TCpu::skip_next_instruction_if_key_pressed(){
 //EXA1
 void TCpu::skip_next_instruction_if_notKeyPressed(){
     uint8_t reg = (m_current_opcode >> 8)&0x0F;
-    uint8_t val = m_reg[reg];
+    uint8_t val = m_reg[reg] & 0x0F;
 
     if(m_machine->m_KEYS[val] == 0){
         m_pcreg +=2;
@@ -520,16 +524,16 @@ void TCpu::add_iregWith_reg(){
 //FX29
 void TCpu::load_FontFrom_vx(){
     uint8_t reg = (m_current_opcode >> 8)&0x0F;
-    m_ireg = m_reg[reg] * 0x5;
+    m_ireg = (m_reg[reg] & 0x0F) * 0x5;
 }//sprites are loaded contiguously and are 5bytes tall hece we multiply with 0x5 inorder to fetch the next one
 
 //FX33
 void TCpu::store_binary_code_decimal_representation(){
     uint8_t reg = (m_current_opcode >> 8) & 0x0F;
 
-    m_machine->RAM[m_ireg] = m_reg[reg]/100;
-    m_machine->RAM[m_ireg+1] = (m_reg[reg]/10)%10;
-    m_machine->RAM[m_ireg+2] = (m_reg[reg])%10;
+    m_machine->RAM[m_ireg & 0xFFF] = m_reg[reg]/100;
+    m_machine->RAM[(m_ireg+1)&0xFFF] = (m_reg[reg]/10)%10;
+    m_machine->RAM[(m_ireg+2)&0xFFF] = (m_reg[reg])%10;
 }
 //uses binary values to help display decimal on screen
 
@@ -537,15 +541,17 @@ void TCpu::store_binary_code_decimal_representation(){
 void TCpu::load_memory_from_regs(){
     uint8_t reg = (m_current_opcode >> 8) & 0x0F;
     for(int i =0;i<=reg;i++){
-        m_machine->RAM[m_ireg+i] = m_reg[i];
+        m_machine->RAM[(m_ireg+i)&0xFFF] = m_reg[i];
     }
+    //m_ireg += reg + 1;
 }//helps in bulk saving values, its a register dump(copying current contents of CPU registers into memory)
 
 //FX65
 void TCpu::load_regs_from_memory(){
     uint8_t reg = (m_current_opcode >> 8) & 0x0F;
     for(int i=0; i<=reg; i++){
-        m_reg[i] = m_machine->RAM[m_ireg + i];
+        m_reg[i] = m_machine->RAM[(m_ireg + i)&0xFFF];
     }
+    //m_ireg += reg + 1;
 }//restores saved states, reload data from memory,....., it is the inverse of register dump
 
