@@ -8,7 +8,7 @@ A cycle-accurate, hardware-accelerated CHIP-8 emulator engineered in C++ with SD
 This project moves beyond simple interpretation by employing a heterogeneous computing architecture. It offloads the render loop from the CPU to the GPU via SDL_Texture streaming and VRAM manipulation, 
 ensuring locked 60FPS performance and eliminating the CPU bottlenecks found in traditional software-rendered emulators.
 
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Key Technical Achievements:
 
 Heterogeneous Rendering: Replaced the legacy software surface blitting logic with modern SDL_Renderer logic. 
@@ -23,7 +23,7 @@ This will decouple the CPU's clock speed-instructions per frame-from the refresh
 
 DSP Audio Synthesis: Created a custom audio callback system using SDL_AudioSpec. 
 Instead of using pre-recorded assets, the emulator will generate sine wave audio data in real time using Digital Signal Processing directly into the sound buffer.
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 System Architecture:
 The emulator follows the Von Neumann architecture, where instructions and data share the same address space.
 Memory Map 
@@ -35,18 +35,18 @@ Display: 64x32 Monochrome display, scaled 20x via GPU for modern resolutions.
 Stack: 16-level deep LIFO stack for subroutine management.
 Timers: Two 8-bit timers (Delay & Sound) operating at 60Hz.
 
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Controls:
 The emulator maps the original 4x4 hexadecimal keypad to the left side of a modern QWERTY keyboard
 <img width="299" height="407" alt="image" src="https://github.com/user-attachments/assets/3e370545-3b94-4e2e-8d3c-b50bd96f3269" />
 
---
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Prerequisites:
 C++ Compiler (g++, clang, or MSVC) supporting C++17.
 SDL2 Development Libraries.
 
---
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Compilation
 Windows (MinGW):
 
@@ -55,12 +55,12 @@ g++ -o chip8 main.cpp chip8.cpp cpu.cpp logger.cpp displaySDL.cpp keyboardSDL.cp
 Linux:
 g++ -o chip8 main.cpp chip8.cpp cpu.cpp logger.cpp displaySDL.cpp keyboardSDL.cpp soundSDL.cpp cmdLineParser.cpp romLoader.cpp -lSDL2
 
---
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Usage
 Run the emulator via the command line, passing the ROM file path as an argument.
 ./chip8 --romFileName "Roms/Pong.ch8"
 
---
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Command-Line Arguments:
 
@@ -81,3 +81,5 @@ soundSDL.cpp/h: Implements real-time audio synthesis via DSP callbacks.
 
 keyboardSDL.cpp/h: Responsible for input handling and key mapping.
 romLoader.cpp/h: Binary file I/O for loading programs into memory at offset 0x200.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+documentation:[Chip-8 journal.pdf](https://github.com/user-attachments/files/24852299/Chip-8.journal.pdf)
