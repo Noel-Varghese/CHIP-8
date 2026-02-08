@@ -257,6 +257,7 @@ void TCpu::or_vx_vy(){
     uint8_t reg_y = (m_current_opcode >> 4)&0x0F;
 
     m_reg[reg_x] |= m_reg[reg_y];
+    m_reg[0xF] = 0;
 }//performs bitwiseOR in order to combine two registers to set flags, mask values etc
 
 //8XY2
@@ -266,6 +267,7 @@ void TCpu::and_vx_vy(){
     uint8_t reg_y = (m_current_opcode >> 4)&0x0F;
 
     m_reg[reg_x] &= m_reg[reg_y];
+    m_reg[0xF] = 0;
 }//performs AND operations , helps in masking bits and shows only the required ones ...Like Abstraction
 
 //8XY3
@@ -274,6 +276,7 @@ void TCpu::xor_vx_vy(){
     uint8_t reg_y = (m_current_opcode >> 4)&0x0F;
 
     m_reg[reg_x] ^= m_reg[reg_y];
+    m_reg[0xF] = 0;
 }//helps toggle and compare values , without branching and extra logic keeps it simple 
 
 //8XY4
@@ -543,7 +546,7 @@ void TCpu::load_memory_from_regs(){
     for(int i =0;i<=reg;i++){
         m_machine->RAM[(m_ireg+i)&0xFFF] = m_reg[i];
     }
-    //m_ireg += reg + 1;
+    m_ireg += reg + 1;
 }//helps in bulk saving values, its a register dump(copying current contents of CPU registers into memory)
 
 //FX65
@@ -552,6 +555,6 @@ void TCpu::load_regs_from_memory(){
     for(int i=0; i<=reg; i++){
         m_reg[i] = m_machine->RAM[(m_ireg + i)&0xFFF];
     }
-    //m_ireg += reg + 1;
+    m_ireg += reg + 1;
 }//restores saved states, reload data from memory,....., it is the inverse of register dump
 
