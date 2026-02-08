@@ -49,44 +49,46 @@ void TChip8::init(std::string rom_path){
 }
 
 void TChip8::run(){
-    using clock = std::chrono::high_resolution_clock;
-    clock::time_point start, end;
-    const std::chrono::milliseconds desired_cycle_time(2);
-    int display_updateDelayTime = 0;
-    static int time_accumulator = 0;
-    while(m_emulator_running){
-        start = clock::now();
-        m_cpu->fetch();
-        m_cpu->decode();
-        m_cpu->exec();
-        if(time_accumulator >= 16){//updates the timer in ~60Hz
-            time_accumulator = 0;
-            m_display->draw(m_screen, SCREEN_H, SCREEN_W);
-            if(m_delay_timer > 0){
-                m_delay_timer--;
-            }
-            if(m_sound_timer > 0){
-                m_sound_timer--;
-                m_sound->playTune();
-            }else{
-                m_sound->pauseT();
-            }
-        }
-        //m_display->update();
+    const int instructions_per_frame = 12; 
+    const int target_frame_time_ms = 16; // ~60 FPS
+
+    while (m_emulator_running) {
+        auto start_time = std::chrono::high_resolution_clock::now();
+
+        // 1. Handle Input (Once per frame)
         m_keyboard->update(m_KEYS, &m_emulator_running);
-        end = clock::now();
-        std::chrono::duration<double, std::micro> loop_time = end-start;
-        //inorder to calculate the elapsed time in millisecond
-        auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(end-start);
-        //calculates minimum time to reach the desired cycle time
-        //time_accumulator += elapsed_time.count();
-        auto sleep_time = desired_cycle_time - elapsed_time;
-        if(sleep_time.count() > 0){
-            std::this_thread::sleep_for(sleep_time);
+
+        // 2. Run a "Burst" of CPU instructions
+        // This is the key fix! We run multiple cycles before sleeping.
+        for (int i = 0; i < instructions_per_frame; i++) {
+            m_cpu->fetch();
+            m_cpu->decode();
+            m_cpu->exec();
         }
-        time_accumulator += desired_cycle_time.count();
-        //display_updateDelayTime++;
-        //SDL_Delay(2);
+
+        // 3. Update Timers (Run at 60Hz standard)
+        if (m_delay_timer > 0) {
+            m_delay_timer--;
+        }
+        if (m_sound_timer > 0) {
+            m_sound_timer--;
+            m_sound->playTune(); // Assuming this handles the beep state
+        } else {
+            m_sound->pauseT();
+        }
+
+        // 4. Draw to Screen (Once per frame)
+        m_display->draw(m_screen, SCREEN_H, SCREEN_W);
+
+        // 5. Sleep to lock 60 FPS
+        auto end_time = std::chrono::high_resolution_clock::now();
+        auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+        
+        int sleep_ms = target_frame_time_ms - (int)elapsed_ms.count();
+        if (sleep_ms > 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(sleep_ms));
+            // OR use SDL_Delay(sleep_ms); if you prefer SDL functions
+        }
     }
 }
 

@@ -491,17 +491,26 @@ void TCpu::loadRegWithDelayTimer(){
 //FX0A
 void TCpu::waitKeyPress(){
     uint8_t reg = (m_current_opcode >> 8) & 0x0F;
-    bool keypressed = false;
-
-    for(int i=0;i<NUM_KEYS;i++){
-        if(m_machine->m_KEYS[i] !=0){
-            m_reg[reg] = i;
-            keypressed = true;
+    static int keyPressed = -1;
+    // bool keypressed = false;
+    if(keyPressed == -1){
+        for(int i=0;i<NUM_KEYS;i++){
+            if(m_machine->m_KEYS[i] !=0){
+                keyPressed = i;
+                break;
+            }
+        }
+        m_pcreg -= 2;
+    }else{
+        if (m_machine->m_KEYS[keyPressed] == 0) {
+            m_reg[reg] = keyPressed; // Saves the key index to Register Vx
+            keyPressed = -1;         
+        } else {
+            m_pcreg -= 2;
         }
     }
-    if(!keypressed){
-        m_pcreg -= 2;
-    }
+    
+    
 }//basically waits for a key press and stores the key index into vx ...also pauses certain instruction until key pressed
 
 //FX15
